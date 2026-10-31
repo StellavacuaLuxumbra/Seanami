@@ -163,7 +163,7 @@ int main() {
     bool output_is_dir = false;
     if (cli.output_explicit) {
         output_is_dir =
-            multiple ||
+            multiple || input_is_dir ||
             std::filesystem::is_directory(std::filesystem::u8path(cli.params.output_midi), ec);
     }
 

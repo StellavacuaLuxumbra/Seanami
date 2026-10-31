@@ -19,6 +19,16 @@ bool TranscribeJob::run(const TranscribeParams& params, std::string& error_messa
         return false;
     }
 
+    // 1.1 确保输出目录存在
+    const auto out_path = std::filesystem::u8path(params.output_midi);
+    if (!out_path.parent_path().empty()) {
+        std::filesystem::create_directories(out_path.parent_path(), ec);
+        if (ec) {
+            error_message = "无法创建输出目录: " + out_path.parent_path().u8string();
+            return false;
+        }
+    }
+
     // 2. 准备临时 WAV
     const auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
     const auto temp_wav =

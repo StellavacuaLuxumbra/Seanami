@@ -58,12 +58,19 @@ if ($PythonHome) {
     Write-Warning "先运行 .\scripts\install_python.ps1，或手动指定 -PythonHome"
 }
 
-# 5. 安装 basic-pitch 到发布包内的 Python
+# 5. 确认发布包内的 Python 能导入 basic-pitch
 $pythonExe = Join-Path $OutDir "python\python.exe"
 if ((Test-Path $pythonExe) -and -not $SkipInstall) {
-    Write-Host "安装 basic-pitch（可能需要几分钟）..."
-    & $pythonExe -m pip install --upgrade pip
-    & $pythonExe -m pip install --no-warn-script-location basic-pitch
+    & $pythonExe -c "import basic_pitch" 2>$null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "发布包内已包含 basic-pitch，跳过安装"
+    } else {
+        Write-Host "安装 basic-pitch（可能需要几分钟）..."
+        & $pythonExe -m pip install --upgrade pip
+        if ($LASTEXITCODE -ne 0) { throw "pip 升级失败" }
+        & $pythonExe -m pip install --no-warn-script-location basic-pitch
+        if ($LASTEXITCODE -ne 0) { throw "basic-pitch 安装失败" }
+    }
 }
 
 # 5.1 精简运行时（删除测试、文档和编译头等非必需内容）
@@ -92,14 +99,18 @@ tab_tool 使用说明
 =================
 
 用法：
-  tab_tool.exe <input.wav|input.mp3> [选项]
+  tab_tool.exe <input.wav|input.mp3|目录> [选项]
 
 示例：
   tab_tool.exe song.wav
   tab_tool.exe song.mp3 -o song.mid --onset-threshold 0.4 -v
+  tab_tool.exe .\music -r -o .\out
+  tab_tool.exe .\music -r -o .\out --open
 
 常用选项：
-  -o, --output <path>        输出 MIDI 路径
+  -o, --output <path>        输出 MIDI 路径；多文件时为输出目录
+  -r, --recursive            目录输入时递归子目录
+      --open                 完成后用系统默认程序打开第一个 MIDI
   -m, --model <dir>          模型目录
       --onset-threshold <f>  起音阈值 0~1（默认 0.5）
       --frame-threshold <f>  音帧阈值 0~1（默认 0.3）
