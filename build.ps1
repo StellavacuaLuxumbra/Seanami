@@ -45,6 +45,7 @@ New-Item -ItemType Directory -Force -Path build | Out-Null
     src/cli/args.cpp `
     src/cli/progress.cpp `
     src/app/transcribe_job.cpp `
+    src/app/batch_runner.cpp `
     src/infra/audio_decoder.cpp `
     src/infra/python_transcriber.cpp `
     src/infra/midi_validator.cpp `

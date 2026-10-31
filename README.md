@@ -68,6 +68,28 @@ python tests\make_sample.py
   -v
 ```
 
+## 批量处理
+
+输入可以是目录，默认只处理该目录第一层，`-r` 递归子目录：
+
+```powershell
+# 处理整个目录，MIDI 输出到 out\
+.\build\tab_tool.exe .\music -o .\out
+
+# 递归子目录，并保留相对目录结构
+.\build\tab_tool.exe .\music -r -o .\out
+
+# 完成后用系统默认程序打开第一个 MIDI
+.\build\tab_tool.exe .\music -r -o .\out --open
+```
+
+规则：
+
+- 单文件且 `-o` 不存在时，`-o` 按文件路径处理。
+- 输入是目录，或 `-o` 已存在且是目录时，`-o` 按输出目录处理。
+- 输出目录会自动创建；同名文件会被覆盖。
+- 某个文件失败不会中断整批，最后汇总成功/失败数量，有失败时退出码为 4。
+
 ## 打包发布（开箱即用）
 
 ```powershell
@@ -76,6 +98,9 @@ python tests\make_sample.py
 
 # 打包：自动使用 tools\python311，复制进 dist 并生成 README
 .\scripts\package.ps1
+
+# 同时生成 dist.zip，方便分发
+.\scripts\package.ps1 -Zip
 ```
 
 如果 Python 装在别处，可以显式指定：
@@ -89,11 +114,14 @@ python tests\make_sample.py
 ```
 dist/
 ├── tab_tool.exe
-├── python/            # 完整 Python 运行时
+├── libstdc++-6.dll        # MinGW 构建时自动带上
+├── libgcc_s_seh-1.dll
+├── libwinpthread-1.dll
+├── python/                # 精简后的 Python 运行时 + basic-pitch
 ├── scripts/
 │   └── transcribe.py
 ├── models/
-│   └── basic_pitch/
+│   └── basic_pitch/       # 预留目录，空时回退到包内置模型
 └── README.txt
 ```
 
@@ -108,10 +136,14 @@ dist/
 ## 命令行
 
 ```
-tab_tool <input.wav|input.mp3> [选项]
+tab_tool <input.wav|input.mp3|目录> [选项]
 
-  -o, --output <path>        输出 MIDI 路径（默认与输入同名 .mid）
-  -m, --model <dir>          模型目录（默认 <exe>/models/basic_pitch）
+输入可以是单个音频文件，也可以是包含 WAV/MP3 的目录。
+
+  -o, --output <path>        输出 MIDI 路径；多文件时为输出目录
+  -r, --recursive            目录输入时递归子目录
+      --open                 完成后用系统默认程序打开第一个 MIDI
+  -m, --model <dir>          模型目录（默认使用 basic-pitch 内置模型）
       --python <path>        Python 解释器（默认 <exe>/python/python.exe）
       --script <path>        推理脚本（默认 <exe>/scripts/transcribe.py）
       --onset-threshold <f>  起音阈值，0~1，默认 0.5
@@ -121,6 +153,20 @@ tab_tool <input.wav|input.mp3> [选项]
       --keep-temp            保留临时文件（调试用）
       --version              显示版本
   -h, --help                 显示帮助
+```
+
+## 测试
+
+不依赖 TensorFlow 的集成测试（用假推理脚本验证解码、子进程、JSON 和 MIDI 校验）：
+
+```powershell
+.\tests\integration.ps1
+```
+
+保留测试输出：
+
+```powershell
+.\tests\integration.ps1 -KeepOutput
 ```
 
 ## 评估

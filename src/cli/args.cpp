@@ -32,7 +32,6 @@ CliResult parse_args(const std::vector<std::string>& args) {
     }
 
     bool input_set = false;
-    bool output_set = false;
 
     for (size_t i = 1; i < args.size(); ++i) {
         const std::string& arg = args[i];
@@ -59,13 +58,21 @@ CliResult parse_args(const std::vector<std::string>& args) {
             result.params.verbose = true;
             continue;
         }
+        if (arg == "-r" || arg == "--recursive") {
+            result.recursive = true;
+            continue;
+        }
+        if (arg == "--open") {
+            result.open_after = true;
+            continue;
+        }
         if (arg == "--keep-temp") {
             result.params.keep_temp = true;
             continue;
         }
         if (arg == "-o" || arg == "--output") {
             if (!need_value("--output", result.params.output_midi)) return result;
-            output_set = true;
+            result.output_explicit = true;
             continue;
         }
         if (arg == "-m" || arg == "--model") {
@@ -121,7 +128,7 @@ CliResult parse_args(const std::vector<std::string>& args) {
             input_set = true;
         } else {
             result.ok = false;
-            result.error = "只能指定一个输入文件";
+            result.error = "只能指定一个输入文件或目录";
             return result;
         }
     }
@@ -132,7 +139,7 @@ CliResult parse_args(const std::vector<std::string>& args) {
         return result;
     }
 
-    if (!output_set) {
+    if (!result.output_explicit) {
         result.params.output_midi = default_output_path(result.params.input_path);
     }
 
@@ -159,10 +166,13 @@ std::string help_text() {
     std::ostringstream os;
     os << "tab_tool - 音频自动扒谱工具\n\n"
        << "用法:\n"
-       << "  tab_tool <input.wav|input.mp3> [选项]\n\n"
+       << "  tab_tool <input.wav|input.mp3|目录> [选项]\n\n"
+       << "输入可以是单个音频文件，也可以是包含 WAV/MP3 的目录。\n\n"
        << "选项:\n"
-       << "  -o, --output <path>        输出 MIDI 路径（默认与输入同名 .mid）\n"
-       << "  -m, --model <dir>          模型目录（默认 <exe>/models/basic_pitch）\n"
+       << "  -o, --output <path>        输出 MIDI 路径；多文件时为输出目录\n"
+       << "  -r, --recursive            目录输入时递归子目录\n"
+       << "      --open                 完成后用系统默认程序打开第一个 MIDI\n"
+       << "  -m, --model <dir>          模型目录（默认使用 basic-pitch 内置模型）\n"
        << "      --python <path>        Python 解释器（默认 <exe>/python/python.exe）\n"
        << "      --script <path>        推理脚本（默认 <exe>/scripts/transcribe.py）\n"
        << "      --onset-threshold <f>  起音阈值，0~1，默认 0.5\n"
@@ -174,7 +184,8 @@ std::string help_text() {
        << "  -h, --help                 显示帮助\n\n"
        << "示例:\n"
        << "  tab_tool song.wav\n"
-       << "  tab_tool song.mp3 -o song.mid --onset-threshold 0.4 -v\n";
+       << "  tab_tool song.mp3 -o song.mid --onset-threshold 0.4 -v\n"
+       << "  tab_tool .\\music -r -o .\\out\n";
     return os.str();
 }
 

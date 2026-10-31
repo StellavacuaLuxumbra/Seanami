@@ -2,7 +2,8 @@
     [string]$PythonHome = "",
     [string]$BuildDir = "build",
     [string]$OutDir = "dist",
-    [switch]$SkipInstall
+    [switch]$SkipInstall,
+    [switch]$Zip
 )
 
 $ErrorActionPreference = "Stop"
@@ -24,6 +25,17 @@ New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 Copy-Item $exe.FullName (Join-Path $OutDir "tab_tool.exe")
 Copy-Item -Recurse -Force "scripts" (Join-Path $OutDir "scripts")
 New-Item -ItemType Directory -Force -Path (Join-Path $OutDir "models\basic_pitch") | Out-Null
+
+# 3.1 如果 exe 是 MinGW 编译的，随带运行时 DLL
+foreach ($mingwBin in @("D:\mingw64\bin", "D:\MinGW\bin")) {
+    if (Test-Path (Join-Path $mingwBin "libstdc++-6.dll")) {
+        foreach ($dll in @("libstdc++-6.dll", "libgcc_s_seh-1.dll", "libwinpthread-1.dll")) {
+            $src = Join-Path $mingwBin $dll
+            if (Test-Path $src) { Copy-Item $src (Join-Path $OutDir $dll) -Force }
+        }
+        break
+    }
+}
 
 # 4. 复制 Python 运行时（完整安装目录，保证自包含）
 if (-not $PythonHome) {
@@ -54,6 +66,26 @@ if ((Test-Path $pythonExe) -and -not $SkipInstall) {
     & $pythonExe -m pip install --no-warn-script-location basic-pitch
 }
 
+# 5.1 精简运行时（删除测试、文档和编译头等非必需内容）
+if (Test-Path $pythonExe) {
+    $trimDirs = @(
+        "Lib\test",
+        "Lib\idlelib",
+        "Lib\tkinter",
+        "Lib\turtledemo",
+        "Lib\ensurepip",
+        "Lib\lib2to3",
+        "Lib\distutils",
+        "Lib\site-packages\tensorflow\include"
+    )
+    foreach ($dir in $trimDirs) {
+        $target = Join-Path $OutDir "python\$dir"
+        if (Test-Path $target) { Remove-Item -Recurse -Force $target }
+    }
+    Get-ChildItem -Path (Join-Path $OutDir "python") -Recurse -Directory -Filter "__pycache__" -ErrorAction SilentlyContinue |
+        Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+}
+
 # 6. 生成使用说明
 $readme = @"
 tab_tool 使用说明
@@ -82,3 +114,16 @@ Set-Content -Path (Join-Path $OutDir "README.txt") -Value $readme -Encoding UTF8
 
 Write-Host "打包完成: $OutDir"
 Write-Host "测试: $OutDir\tab_tool.exe <音频文件>"
+
+# 7. 可选：生成 zip
+if ($Zip) {
+    $zipPath = "$OutDir.zip"
+    if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    [System.IO.Compression.ZipFile]::CreateFromDirectory(
+        (Resolve-Path $OutDir).Path,
+        $zipPath,
+        [System.IO.Compression.CompressionLevel]::Optimal,
+        $false)
+    Write-Host "压缩包: $zipPath"
+}

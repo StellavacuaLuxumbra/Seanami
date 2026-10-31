@@ -9,6 +9,9 @@ struct CliResult {
     bool ok = true;
     bool show_help = false;
     bool show_version = false;
+    bool recursive = false;
+    bool open_after = false;
+    bool output_explicit = false;
     TranscribeParams params;
     std::string error;
 };
