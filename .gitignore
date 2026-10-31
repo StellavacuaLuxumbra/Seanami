@@ -13,3 +13,4 @@ venv/
 tests/samples/*
 !tests/samples/.gitkeep
 tests/out*/
+dist.zip

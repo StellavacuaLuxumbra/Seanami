@@ -37,6 +37,12 @@ foreach ($mingwBin in @("D:\mingw64\bin", "D:\MinGW\bin")) {
     }
 }
 
+# 3.2 onnxruntime 依赖 MSVC 运行时，干净系统上也要能跑
+foreach ($dll in @("msvcp140.dll", "msvcp140_1.dll", "msvcp140_2.dll")) {
+    $src = Join-Path $env:WINDIR "System32\$dll"
+    if (Test-Path $src) { Copy-Item $src (Join-Path $OutDir $dll) -Force }
+}
+
 # 4. 复制 Python 运行时（完整安装目录，保证自包含）
 if (-not $PythonHome) {
     $defaultPython = Join-Path $Root "tools\python311"
@@ -58,11 +64,11 @@ if ($PythonHome) {
     Write-Warning "先运行 .\scripts\install_python.ps1，或手动指定 -PythonHome"
 }
 
-# 5. 确认发布包内的 Python 能导入 basic-pitch
+# 5. 确认发布包内已包含 basic-pitch
 $pythonExe = Join-Path $OutDir "python\python.exe"
+$basicPitchDir = Join-Path $OutDir "python\Lib\site-packages\basic_pitch"
 if ((Test-Path $pythonExe) -and -not $SkipInstall) {
-    & $pythonExe -c "import basic_pitch" 2>$null
-    if ($LASTEXITCODE -eq 0) {
+    if (Test-Path $basicPitchDir) {
         Write-Host "发布包内已包含 basic-pitch，跳过安装"
     } else {
         Write-Host "安装 basic-pitch（可能需要几分钟）..."
@@ -83,12 +89,31 @@ if (Test-Path $pythonExe) {
         "Lib\ensurepip",
         "Lib\lib2to3",
         "Lib\distutils",
-        "Lib\site-packages\tensorflow\include"
+        # 发布包默认使用 ONNX 后端，TensorFlow 相关运行时全部移除
+        "Lib\site-packages\tensorflow",
+        "Lib\site-packages\keras",
+        "Lib\site-packages\tensorboard",
+        "Lib\site-packages\tensorboard_data_server",
+        "Lib\site-packages\tensorflow_estimator",
+        "Lib\site-packages\tensorflow_io_gcs_filesystem",
+        "Lib\site-packages\clang",
+        "Lib\site-packages\grpc",
+        "Lib\site-packages\h5py",
+        "Lib\site-packages\sklearn",
+        # 训练/可视化才会用到的测试数据
+        "Lib\site-packages\scipy\tests",
+        "Lib\site-packages\numpy\tests",
+        "Lib\site-packages\librosa\tests"
     )
     foreach ($dir in $trimDirs) {
         $target = Join-Path $OutDir "python\$dir"
         if (Test-Path $target) { Remove-Item -Recurse -Force $target }
     }
+
+    # 运行时不需要 .lib 导入库
+    Get-ChildItem -Path (Join-Path $OutDir "python\Lib\site-packages") -Recurse -Filter "*.lib" -ErrorAction SilentlyContinue |
+        Remove-Item -Force -ErrorAction SilentlyContinue
+
     Get-ChildItem -Path (Join-Path $OutDir "python") -Recurse -Directory -Filter "__pycache__" -ErrorAction SilentlyContinue |
         Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
 }
@@ -119,7 +144,8 @@ tab_tool 使用说明
   -h, --help                 帮助
 
 运行环境：
-  本目录已包含 Python 运行时和 basic-pitch，无需额外安装。
+  本目录已包含 Python 运行时、basic-pitch 和 onnxruntime，无需额外安装。
+  默认使用 Basic Pitch 内置 ONNX 模型，不需要 TensorFlow。
 "@
 Set-Content -Path (Join-Path $OutDir "README.txt") -Value $readme -Encoding UTF8
 

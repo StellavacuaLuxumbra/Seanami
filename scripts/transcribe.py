@@ -45,6 +45,7 @@ def main() -> int:
         return 2
 
     try:
+        import basic_pitch
         from basic_pitch import ICASSP_2022_MODEL_PATH
         from basic_pitch.inference import predict
     except Exception as exc:  # noqa: BLE001
@@ -60,11 +61,19 @@ def main() -> int:
         return 2
 
     model_path = args.model
-    if not model_path or not os.path.exists(model_path):
-        model_path = str(ICASSP_2022_MODEL_PATH)
-    elif os.path.isdir(model_path) and not os.listdir(model_path):
-        # 目录存在但为空（打包时预留的目录），回退到包内置模型
-        model_path = str(ICASSP_2022_MODEL_PATH)
+    if not model_path or not os.path.exists(model_path) or (
+        os.path.isdir(model_path) and not os.listdir(model_path)
+    ):
+        # 优先使用 Basic Pitch 自带的 ONNX 模型，避免依赖体积巨大的 TensorFlow；
+        # 没装 onnxruntime 时回退到包默认模型（可能是 TF SavedModel）。
+        if getattr(basic_pitch, "ONNX_PRESENT", False):
+            model_path = str(
+                basic_pitch.build_icassp_2022_model_path(
+                    basic_pitch.FilenameSuffix.onnx
+                )
+            )
+        else:
+            model_path = str(ICASSP_2022_MODEL_PATH)
 
     if args.verbose:
         print(f"[transcribe] input={args.input}", file=sys.stderr)

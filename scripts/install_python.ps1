@@ -66,8 +66,14 @@ Write-Host "安装 basic-pitch（会下载 TensorFlow，请耐心等待）..."
 & $pythonExe @installArgs
 if ($LASTEXITCODE -ne 0) { throw "basic-pitch 安装失败" }
 
+$onnxArgs = @("-m", "pip", "install", "onnxruntime")
+if ($IndexUrl) { $onnxArgs += @("-i", $IndexUrl) }
+Write-Host "安装 onnxruntime（发布包默认推理后端）..."
+& $pythonExe @onnxArgs
+if ($LASTEXITCODE -ne 0) { throw "onnxruntime 安装失败" }
+
 Write-Host "验证导入 ..."
-& $pythonExe -c "import basic_pitch, tensorflow as tf; print('basic-pitch ok'); print('tensorflow', tf.__version__)"
+& $pythonExe -c "import basic_pitch, tensorflow as tf, onnxruntime; print('basic-pitch ok'); print('tensorflow', tf.__version__); print('onnxruntime', onnxruntime.__version__)"
 if ($LASTEXITCODE -ne 0) { throw "导入验证失败" }
 
 Write-Host ""

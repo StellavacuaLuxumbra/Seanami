@@ -2,6 +2,7 @@
 
 基于 C++ 命令行的音频自动扒谱工具。C++ 负责音频解码、流程编排和 MIDI 校验，Python 侧用
 [Basic Pitch](https://github.com/spotify/basic-pitch) 做音频转 MIDI，通过子进程解耦。
+默认使用 Basic Pitch 自带的 ONNX 模型和 onnxruntime，发布包不需要 TensorFlow。
 
 ## 架构
 
@@ -42,9 +43,12 @@ cmake --build build --config Release
 ## 安装运行时（一次）
 
 ```powershell
-# 自动下载 Python 3.11 并安装 basic-pitch 到 tools\python311
+# 自动下载 Python 3.11，并安装 basic-pitch + onnxruntime 到 tools\python311
 .\scripts\install_python.ps1
 ```
+
+> 开发环境会安装 TensorFlow（basic-pitch 的默认依赖），但发布包默认使用 ONNX，
+> 打包时会移除 TensorFlow 相关文件，体积从约 1.5 GB 降到约 480 MB。
 
 ## 开发模式运行
 
@@ -117,11 +121,12 @@ dist/
 ├── libstdc++-6.dll        # MinGW 构建时自动带上
 ├── libgcc_s_seh-1.dll
 ├── libwinpthread-1.dll
-├── python/                # 精简后的 Python 运行时 + basic-pitch
+├── msvcp140*.dll          # onnxruntime 需要的 MSVC 运行时
+├── python/                # 精简后的 Python 运行时 + basic-pitch + onnxruntime
 ├── scripts/
 │   └── transcribe.py
 ├── models/
-│   └── basic_pitch/       # 预留目录，空时回退到包内置模型
+│   └── basic_pitch/       # 预留目录，空时回退到包内置 ONNX 模型
 └── README.txt
 ```
 
@@ -131,7 +136,8 @@ dist/
 .\tab_tool.exe song.wav
 ```
 
-> 注意：Basic Pitch 依赖 TensorFlow，发布包约 500~600 MB。
+> 发布包约 480 MB（已移除 TensorFlow）。如果显式传入 `-m` 指向 TensorFlow SavedModel，
+> 仍需要自行准备 TensorFlow 运行时。
 
 ## 命令行
 
