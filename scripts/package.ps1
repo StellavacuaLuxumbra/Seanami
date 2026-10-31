@@ -26,7 +26,16 @@ Copy-Item -Recurse -Force "scripts" (Join-Path $OutDir "scripts")
 New-Item -ItemType Directory -Force -Path (Join-Path $OutDir "models\basic_pitch") | Out-Null
 
 # 4. 复制 Python 运行时（完整安装目录，保证自包含）
+if (-not $PythonHome) {
+    $defaultPython = Join-Path $Root "tools\python311"
+    if (Test-Path (Join-Path $defaultPython "python.exe")) {
+        $PythonHome = $defaultPython
+        Write-Host "使用项目内置 Python: $PythonHome"
+    }
+}
+
 if ($PythonHome) {
+    $PythonHome = [System.IO.Path]::GetFullPath($PythonHome)
     if (-not (Test-Path (Join-Path $PythonHome "python.exe"))) {
         throw "PythonHome 下找不到 python.exe: $PythonHome"
     }
@@ -34,7 +43,7 @@ if ($PythonHome) {
     Copy-Item -Recurse -Force $PythonHome (Join-Path $OutDir "python")
 } else {
     Write-Warning "未指定 -PythonHome，发布包将缺少 Python 运行时。"
-    Write-Warning "示例: .\scripts\package.ps1 -PythonHome 'C:\Python311'"
+    Write-Warning "先运行 .\scripts\install_python.ps1，或手动指定 -PythonHome"
 }
 
 # 5. 安装 basic-pitch 到发布包内的 Python

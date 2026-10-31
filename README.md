@@ -39,17 +39,31 @@ cmake --build build --config Release
 > 如果项目路径包含中文，MinGW Makefiles 可能无法正确生成构建规则，建议使用 MSVC，
 > 或把项目放到纯英文路径下。直接用 `build.ps1` 的 g++ 分支可以绕过 CMake。
 
-## 开发模式运行
-
-开发时可以不打包，直接用系统 Python：
+## 安装运行时（一次）
 
 ```powershell
-# 安装依赖
-pip install basic-pitch
+# 自动下载 Python 3.11 并安装 basic-pitch 到 tools\python311
+.\scripts\install_python.ps1
+```
 
-# 运行（--python 指向系统 Python，--script 指向仓库里的脚本）
-.\build\Release\tab_tool.exe song.wav `
-  --python "$(Get-Command python).Source" `
+## 开发模式运行
+
+```powershell
+# 构建
+.\build.ps1
+
+# 生成一段测试旋律（可选）
+python tests\make_sample.py
+
+# 用内置 Python 跑完整流程
+.\scripts\run_dev.ps1 tests\samples\melody.wav
+```
+
+也可以手动指定解释器：
+
+```powershell
+.\build\tab_tool.exe song.wav `
+  --python .\tools\python311\python.exe `
   --script .\scripts\transcribe.py `
   -v
 ```
@@ -58,9 +72,15 @@ pip install basic-pitch
 
 ```powershell
 # 先编译
-cmake --build build --config Release
+.\build.ps1
 
-# 打包：把 Python 安装目录复制进 dist，并安装 basic-pitch
+# 打包：自动使用 tools\python311，复制进 dist 并生成 README
+.\scripts\package.ps1
+```
+
+如果 Python 装在别处，可以显式指定：
+
+```powershell
 .\scripts\package.ps1 -PythonHome "C:\Python311"
 ```
 
