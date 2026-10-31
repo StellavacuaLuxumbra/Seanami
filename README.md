@@ -136,7 +136,7 @@ dist/
 .\tab_tool.exe song.wav
 ```
 
-> 发布包约 480 MB（已移除 TensorFlow）。如果显式传入 `-m` 指向 TensorFlow SavedModel，
+> 发布包约 480 MB（已移除 TensorFlow），压缩后的 `dist.zip` 约 155 MB。如果显式传入 `-m` 指向 TensorFlow SavedModel，
 > 仍需要自行准备 TensorFlow 运行时。
 
 ## 命令行
