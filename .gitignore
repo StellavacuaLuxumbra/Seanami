@@ -1,0 +1,13 @@
+build/
+dist/
+out/
+.vs/
+.vscode/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+tests/samples/*
+!tests/samples/.gitkeep
