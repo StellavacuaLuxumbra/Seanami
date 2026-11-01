@@ -15,7 +15,7 @@ struct TranscribeParams {
     // Basic Pitch 参数
     float onset_threshold = 0.5f;
     float frame_threshold = 0.3f;
-    float min_note_ms = 58.0f;
+    float min_note_ms = 127.7f;
 
     bool verbose = false;
     bool keep_temp = false;

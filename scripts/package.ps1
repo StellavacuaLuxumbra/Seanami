@@ -139,7 +139,7 @@ tab_tool 使用说明
   -m, --model <dir>          模型目录
       --onset-threshold <f>  起音阈值 0~1（默认 0.5）
       --frame-threshold <f>  音帧阈值 0~1（默认 0.3）
-      --min-note-ms <f>      最短音符毫秒（默认 58）
+      --min-note-ms <f>      最短音符毫秒（默认 127.7）
   -v, --verbose              详细日志
   -h, --help                 帮助
 

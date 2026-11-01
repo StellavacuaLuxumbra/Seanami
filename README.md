@@ -154,7 +154,7 @@ tab_tool <input.wav|input.mp3|目录> [选项]
       --script <path>        推理脚本（默认 <exe>/scripts/transcribe.py）
       --onset-threshold <f>  起音阈值，0~1，默认 0.5
       --frame-threshold <f>  音帧阈值，0~1，默认 0.3
-      --min-note-ms <f>      最短音符毫秒数，默认 58
+      --min-note-ms <f>      最短音符毫秒数，默认 127.7
   -v, --verbose              输出详细日志
       --keep-temp            保留临时文件（调试用）
       --version              显示版本

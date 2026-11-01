@@ -177,7 +177,7 @@ std::string help_text() {
        << "      --script <path>        推理脚本（默认 <exe>/scripts/transcribe.py）\n"
        << "      --onset-threshold <f>  起音阈值，0~1，默认 0.5\n"
        << "      --frame-threshold <f>  音帧阈值，0~1，默认 0.3\n"
-       << "      --min-note-ms <f>      最短音符毫秒数，默认 58\n"
+       << "      --min-note-ms <f>      最短音符毫秒数，默认 127.7\n"
        << "  -v, --verbose              输出详细日志\n"
        << "      --keep-temp            保留临时文件（调试用）\n"
        << "      --version              显示版本\n"

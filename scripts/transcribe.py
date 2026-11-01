@@ -34,7 +34,7 @@ def main() -> int:
     parser.add_argument("--model", default="", help="模型目录，空则用包内置模型")
     parser.add_argument("--onset-threshold", type=float, default=0.5)
     parser.add_argument("--frame-threshold", type=float, default=0.3)
-    parser.add_argument("--min-note-ms", type=float, default=58.0)
+    parser.add_argument("--min-note-ms", type=float, default=127.7)
     parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args()
 
