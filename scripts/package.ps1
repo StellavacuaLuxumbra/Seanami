@@ -146,6 +146,10 @@ tab_tool 使用说明
 运行环境：
   本目录已包含 Python 运行时、basic-pitch 和 onnxruntime，无需额外安装。
   默认使用 Basic Pitch 内置 ONNX 模型，不需要 TensorFlow。
+
+效果与速度：
+  独奏/主旋律效果最好，复音和强伴奏效果有限。
+  10 秒音频约 15 秒，5 分钟音频约 20 秒（含启动）。
 "@
 Set-Content -Path (Join-Path $OutDir "README.txt") -Value $readme -Encoding UTF8
 

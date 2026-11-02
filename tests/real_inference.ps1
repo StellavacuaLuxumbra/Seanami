@@ -20,9 +20,9 @@ if (-not (Test-Path $InputFile)) {
     & $python (Join-Path $Root "tests\make_sample.py") | Out-Null
 }
 
-Write-Host "检查 basic-pitch 导入 ..."
-& $python -c "import basic_pitch, tensorflow as tf; from importlib.metadata import version; print('basic-pitch', version('basic-pitch')); print('tensorflow', tf.__version__)"
-if ($LASTEXITCODE -ne 0) { throw "basic-pitch / tensorflow 导入失败" }
+Write-Host "检查 basic-pitch / onnxruntime 导入 ..."
+& $python -c "import basic_pitch, onnxruntime; from importlib.metadata import version; print('basic-pitch', version('basic-pitch')); print('onnxruntime', onnxruntime.__version__)"
+if ($LASTEXITCODE -ne 0) { throw "basic-pitch / onnxruntime 导入失败" }
 
 $outDir = Join-Path $Root "tests\out_real"
 if (Test-Path $outDir) { Remove-Item -Recurse -Force $outDir }
