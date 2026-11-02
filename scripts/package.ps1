@@ -18,7 +18,11 @@ if (-not $exe) {
 }
 
 # 2. 准备输出目录
-if (Test-Path $OutDir) { Remove-Item -Recurse -Force $OutDir }
+if (Test-Path $OutDir) {
+    # PowerShell 的 Remove-Item 在文件多时非常慢，改用 cmd 的 rd
+    & cmd /c "rd /s /q `"$OutDir`"" | Out-Null
+    if (Test-Path $OutDir) { throw "无法清理输出目录: $OutDir" }
+}
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 
 # 3. 复制主程序和脚本
@@ -58,7 +62,42 @@ if ($PythonHome) {
         throw "PythonHome 下找不到 python.exe: $PythonHome"
     }
     Write-Host "复制 Python 运行时: $PythonHome"
-    Copy-Item -Recurse -Force $PythonHome (Join-Path $OutDir "python")
+    # 复制时就排除 TensorFlow 等运行时不需要的目录，避免先复制 1 GB 再删除。
+    $excludeRelative = @(
+        "Lib\test",
+        "Lib\idlelib",
+        "Lib\tkinter",
+        "Lib\turtledemo",
+        "Lib\ensurepip",
+        "Lib\lib2to3",
+        "Lib\distutils",
+        "Lib\site-packages\tensorflow",
+        "Lib\site-packages\keras",
+        "Lib\site-packages\tensorboard",
+        "Lib\site-packages\tensorboard_data_server",
+        "Lib\site-packages\tensorflow_estimator",
+        "Lib\site-packages\tensorflow_io_gcs_filesystem",
+        "Lib\site-packages\clang",
+        "Lib\site-packages\grpc",
+        "Lib\site-packages\h5py",
+        "Lib\site-packages\sklearn",
+        "Lib\site-packages\scipy\tests",
+        "Lib\site-packages\numpy\tests",
+        "Lib\site-packages\librosa\tests"
+    )
+    $helperArgs = @(
+        (Join-Path $Root "scripts\hardlink_tree.py"),
+        $PythonHome,
+        (Join-Path $OutDir "python"),
+        "--exclude-name", "__pycache__",
+        "--exclude-ext", ".lib"
+    )
+    foreach ($relative in $excludeRelative) {
+        $helperArgs += @("--exclude", $relative)
+    }
+    & (Join-Path $PythonHome "python.exe") @helperArgs
+    if ($LASTEXITCODE -ne 0) { throw "复制 Python 运行时失败（exit $LASTEXITCODE）" }
+    Write-Host "Python 运行时复制完成"
 } else {
     Write-Warning "未指定 -PythonHome，发布包将缺少 Python 运行时。"
     Write-Warning "先运行 .\scripts\install_python.ps1，或手动指定 -PythonHome"

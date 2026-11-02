@@ -138,6 +138,9 @@ dist/
 
 > 发布包约 480 MB（已移除 TensorFlow），压缩后的 `dist.zip` 约 155 MB。如果显式传入 `-m` 指向 TensorFlow SavedModel，
 > 仍需要自行准备 TensorFlow 运行时。
+>
+> 打包时 Python 运行时用硬链接镜像（同一磁盘上近乎瞬时，且不重复占用空间）；
+> 跨盘或不支持硬链接时自动回退为普通复制。
 
 ## 效果与性能
 
