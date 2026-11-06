@@ -16,3 +16,4 @@ tests/out*/
 # 真实音频测试集（vocadito，CC BY 4.0），用 tests/eval/fetch_vocadito.py 按需下载
 tests/real/
 dist.zip
+dist_old/
