@@ -25,9 +25,11 @@ if (Test-Path $OutDir) {
 }
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 
-# 3. 复制主程序和脚本
+# 3. 复制主程序、脚本和许可证
 Copy-Item $exe.FullName (Join-Path $OutDir "tab_tool.exe")
 Copy-Item -Recurse -Force "scripts" (Join-Path $OutDir "scripts")
+Copy-Item (Join-Path $Root "LICENSE") (Join-Path $OutDir "LICENSE")
+Copy-Item (Join-Path $Root "THIRD_PARTY_NOTICES.md") (Join-Path $OutDir "THIRD_PARTY_NOTICES.md")
 New-Item -ItemType Directory -Force -Path (Join-Path $OutDir "models\basic_pitch") | Out-Null
 
 # 3.1 如果 exe 是 MinGW 编译的，随带运行时 DLL
@@ -188,7 +190,12 @@ tab_tool 使用说明
 
 效果与速度：
   独奏/主旋律效果最好，复音和强伴奏效果有限。
-  10 秒音频约 15 秒，5 分钟音频约 20 秒（含启动）。
+  热启动约 6~8 秒，10 秒音频约 10~15 秒，5 分钟音频约 12~20 秒（含启动）。
+  首次运行可能触发杀毒软件扫描，冷启动约 55 秒；之后会恢复正常。
+
+许可证：
+  本项目源码采用 MIT 许可证，见 LICENSE。
+  发布包内的第三方组件按各自许可证分发，见 THIRD_PARTY_NOTICES.md。
 "@
 Set-Content -Path (Join-Path $OutDir "README.txt") -Value $readme -Encoding UTF8
 

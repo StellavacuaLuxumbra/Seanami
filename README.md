@@ -4,6 +4,9 @@
 [Basic Pitch](https://github.com/spotify/basic-pitch) 做音频转 MIDI，通过子进程解耦。
 默认使用 Basic Pitch 自带的 ONNX 模型和 onnxruntime，发布包不需要 TensorFlow。
 
+预编译的 Windows 发布包见 [GitHub Releases](https://github.com/StellavacuaLuxumbra/Seanami/releases)，
+解压后可直接运行，无需安装 Python。
+
 ## 架构
 
 ```
@@ -174,8 +177,9 @@ A1/A2 计算，取较高值作为该段的 A-max，再对 10 段求平均。
 | 63.7 s | 15.2 s |
 | 298.8 s | 20.0 s |
 
-启动约 13~14 秒，之后长音频端到端约为实时的 15 倍（5 分钟音频约 20 秒）。
-批量目录会为每个文件启动一次 Python，文件很多时启动开销会累加。
+热启动约 6~8 秒，之后长音频端到端约为实时的 15~20 倍（5 分钟音频实测 12~20 秒）。
+首次从 zip 解压后运行可能触发 Windows Defender 等杀毒软件扫描，冷启动实测约 55 秒；
+之后会恢复正常。批量目录会为每个文件启动一次 Python，文件很多时启动开销会累加。
 
 ## 命令行
 
@@ -241,3 +245,8 @@ tab_tool <input.wav|input.mp3|目录> [选项]
 - 第一版聚焦独奏/主旋律（钢琴、吉他、清唱），复音和强伴奏效果有限。
 - 不输出乐谱（MusicXML），只输出 MIDI。
 - 不支持实时输入。
+
+## 许可证
+
+本项目源码采用 MIT 许可证，见 [LICENSE](LICENSE)。发布包内含的第三方组件按各自许可证分发，
+详见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
