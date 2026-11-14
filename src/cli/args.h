@@ -12,6 +12,10 @@ struct CliResult {
     bool recursive = false;
     bool open_after = false;
     bool output_explicit = false;
+    bool skip_existing = false;
+    bool use_worker = true;
+    int jobs = 1;
+    std::string report_path;
     TranscribeParams params;
     std::string error;
 };

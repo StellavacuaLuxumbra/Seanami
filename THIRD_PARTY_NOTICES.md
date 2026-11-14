@@ -17,8 +17,10 @@
 | pretty_midi | 0.2.11.post0 | MIT | 见 `pretty_midi-0.2.11.post0.dist-info` |
 | mido | 1.3.3 | MIT | MIDI 读写 |
 | soundfile | 0.14.0 | BSD-3-Clause | 见 `soundfile-0.14.0.dist-info` |
+| libsndfile | 1.2.2 | LGPL-2.1-or-later | soundfile 随包动态库，见 `soundfile-0.14.0.dist-info` |
 | python-soxr | 1.1.0 | LGPL-2.1-or-later | 动态扩展；源码 <https://github.com/dofuuz/python-soxr> |
 | dr_wav / dr_mp3 | — | public domain / MIT-0 | David Reid；见 `third_party/` |
+| dr_flac | 0.13.4 | public domain / MIT-0 | David Reid；见 `third_party/dr_flac.h` |
 | nlohmann/json | — | MIT | 见 `third_party/json.hpp` |
 | GCC 运行库（libstdc++ / libgcc） | — | GPL-3.0-or-later WITH GCC-exception-3.1 | MinGW-w64 运行库 DLL |
 | libwinpthread | — | MIT | MinGW-w64 运行库 DLL |

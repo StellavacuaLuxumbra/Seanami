@@ -12,6 +12,34 @@ function Get-VsInstallPath {
     return (& $vswhere -latest -property installationPath)
 }
 
+$sources = @(
+    "src/main.cpp",
+    "src/cli/args.cpp",
+    "src/cli/progress.cpp",
+    "src/app/transcribe_job.cpp",
+    "src/app/batch_runner.cpp",
+    "src/infra/audio_decoder.cpp",
+    "src/infra/python_transcriber.cpp",
+    "src/infra/midi_validator.cpp"
+)
+
+# 1. 优先使用项目内置的 Zig：自带 64 位 clang/libc++，生成静态 exe，
+#    发布包不需要附带 MinGW 运行时 DLL。
+$zig = Get-ChildItem -Path (Join-Path $Root "tools\ziglang") -Recurse -Filter "zig.exe" -ErrorAction SilentlyContinue |
+       Select-Object -First 1
+if ($zig) {
+    Write-Host "使用 Zig: $($zig.FullName)"
+    New-Item -ItemType Directory -Force -Path build | Out-Null
+    & $zig.FullName c++ -target x86_64-windows-gnu -std=c++17 -O2 -Isrc -Ithird_party `
+        @sources -o build/tab_tool.exe -lshell32
+    if ($LASTEXITCODE -eq 0 -and (Test-Path "build\tab_tool.exe")) {
+        Copy-Item -Recurse -Force "scripts" "build/scripts"
+        Write-Host "产物: build\tab_tool.exe"
+        exit 0
+    }
+    Write-Warning "Zig 构建失败，尝试其他工具链..."
+}
+
 $vsPath = Get-VsInstallPath
 if ($vsPath) {
     Write-Host "使用 Visual Studio: $vsPath"
@@ -41,14 +69,7 @@ if (-not $gxx) {
 Write-Host "使用 MinGW: $gxx"
 New-Item -ItemType Directory -Force -Path build | Out-Null
 & $gxx -std=c++17 -O2 -Isrc -Ithird_party `
-    src/main.cpp `
-    src/cli/args.cpp `
-    src/cli/progress.cpp `
-    src/app/transcribe_job.cpp `
-    src/app/batch_runner.cpp `
-    src/infra/audio_decoder.cpp `
-    src/infra/python_transcriber.cpp `
-    src/infra/midi_validator.cpp `
+    @sources `
     -o build/tab_tool.exe -lshell32
 
 if ($LASTEXITCODE -ne 0) { throw "编译失败" }

@@ -52,7 +52,7 @@ std::string lower_extension(const std::filesystem::path& path) {
 
 bool is_supported_audio(const std::filesystem::path& path) {
     const std::string ext = lower_extension(path);
-    return ext == ".wav" || ext == ".mp3";
+    return ext == ".wav" || ext == ".mp3" || ext == ".flac";
 }
 
 std::vector<std::string> collect_inputs(const std::string& input, bool recursive) {
@@ -141,6 +141,7 @@ int main() {
     }
     // 默认不指定模型目录，让 Python 使用 basic_pitch 包内置模型；
     // 只有用户显式传 -m 时才覆盖。
+    cli.params.use_worker = cli.use_worker;
 
     std::error_code ec;
     if (!std::filesystem::exists(std::filesystem::u8path(cli.params.input_path), ec)) {
@@ -151,7 +152,7 @@ int main() {
     const std::vector<std::string> inputs =
         collect_inputs(cli.params.input_path, cli.recursive);
     if (inputs.empty()) {
-        std::cerr << "[tab_tool] 错误: 没有找到可处理的音频文件（WAV/MP3）: "
+        std::cerr << "[tab_tool] 错误: 没有找到可处理的音频文件（WAV/MP3/FLAC）: "
                   << cli.params.input_path << std::endl;
         return 2;
     }
@@ -172,6 +173,12 @@ int main() {
     for (const std::string& input : inputs) {
         TranscribeParams task = cli.params;
         task.input_path = input;
+        task.use_worker = cli.use_worker;
+
+        if (task.track_name.empty()) {
+            task.track_name = std::filesystem::u8path(input).stem().u8string();
+            if (task.track_name.empty()) task.track_name = "Melody";
+        }
 
         if (output_is_dir) {
             const auto out_dir = std::filesystem::u8path(cli.params.output_midi);
@@ -202,25 +209,64 @@ int main() {
     Progress progress(cli.params.verbose);
     progress.detail("Python: " + cli.params.python_exe);
     progress.detail("脚本: " + cli.params.script_path);
+    progress.detail("预设: " + cli.params.preset);
     progress.detail("待处理: " + std::to_string(tasks.size()) + " 个文件");
+    progress.detail("并行: " + std::to_string(cli.jobs) + "，worker: " +
+                    (cli.use_worker ? "开启" : "关闭"));
+    if (!cli.report_path.empty()) {
+        progress.detail("报告: " + cli.report_path);
+    }
 
-    auto job = std::make_unique<TranscribeJob>(std::make_unique<AudioDecoder>(),
+    auto factory = []() -> std::unique_ptr<TranscribeJob> {
+        return std::make_unique<TranscribeJob>(std::make_unique<AudioDecoder>(),
                                                std::make_unique<PythonTranscriber>());
+    };
 
-    BatchRunner runner(*job);
+    BatchOptions options;
+    options.jobs = cli.jobs;
+    options.skip_existing = cli.skip_existing;
+    options.report_path = cli.report_path;
+
+    BatchRunner runner(factory, options);
     const BatchSummary summary = runner.run(tasks);
 
+    bool report_ok = true;
+    if (!cli.report_path.empty()) {
+        std::string report_error;
+        if (write_batch_report(cli.report_path, summary, report_error)) {
+            progress.info("报告: " + cli.report_path);
+        } else {
+            progress.error("无法写入报告: " + report_error);
+            report_ok = false;
+        }
+    }
+
     if (summary.failed == 0) {
-        progress.info("全部完成: " + std::to_string(summary.succeeded) + " 个文件");
+        if (summary.skipped > 0) {
+            progress.info("全部完成: " + std::to_string(summary.succeeded) +
+                          " 个文件，跳过 " + std::to_string(summary.skipped) + " 个");
+        } else {
+            progress.info("全部完成: " + std::to_string(summary.succeeded) + " 个文件");
+        }
     } else {
         progress.error("完成 " + std::to_string(summary.succeeded) + " 个，失败 " +
-                       std::to_string(summary.failed) + " 个");
+                       std::to_string(summary.failed) + " 个，跳过 " +
+                       std::to_string(summary.skipped) + " 个");
     }
 
-    if (cli.open_after && !summary.outputs.empty()) {
-        const std::wstring target = utf8_to_wide(summary.outputs.front());
-        ShellExecuteW(nullptr, L"open", target.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    std::string open_target;
+    if (cli.open_after) {
+        if (!summary.outputs.empty()) {
+            open_target = summary.outputs.front();
+        } else if (summary.skipped > 0 && !tasks.empty()) {
+            open_target = tasks.front().output_midi;
+        }
+        if (!open_target.empty()) {
+            const std::wstring target = utf8_to_wide(open_target);
+            ShellExecuteW(nullptr, L"open", target.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+        }
     }
 
+    if (!report_ok) return 5;
     return summary.failed == 0 ? 0 : 4;
 }

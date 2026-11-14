@@ -20,9 +20,36 @@ if (-not (Test-Path $InputFile)) {
     & $python (Join-Path $Root "tests\make_sample.py") | Out-Null
 }
 
+# basic-pitch 在导入时会向 stderr 打印可选依赖警告；Windows PowerShell 5.1
+# 会把原生命令的 stderr 当成 NativeCommandError，这里临时放宽以读取真实退出码。
+function Invoke-Native {
+    param([scriptblock]$Command)
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        & $Command
+        return $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previous
+    }
+}
+
+function Show-NativeLine {
+    process {
+        if ($_ -is [System.Management.Automation.ErrorRecord]) {
+            Write-Host $_.Exception.Message
+        } else {
+            Write-Host $_
+        }
+    }
+}
+
 Write-Host "检查 basic-pitch / onnxruntime 导入 ..."
-& $python -c "import basic_pitch, onnxruntime; from importlib.metadata import version; print('basic-pitch', version('basic-pitch')); print('onnxruntime', onnxruntime.__version__)"
-if ($LASTEXITCODE -ne 0) { throw "basic-pitch / onnxruntime 导入失败" }
+$importExit = Invoke-Native {
+    & $python -c "import basic_pitch, onnxruntime; from importlib.metadata import version; print('basic-pitch', version('basic-pitch')); print('onnxruntime', onnxruntime.__version__)" 2>&1 |
+        Show-NativeLine
+}
+if ($importExit -ne 0) { throw "basic-pitch / onnxruntime 导入失败（退出码 $importExit）" }
 
 $outDir = Join-Path $Root "tests\out_real"
 if (Test-Path $outDir) { Remove-Item -Recurse -Force $outDir }
@@ -30,8 +57,11 @@ New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 $mid = Join-Path $outDir "result.mid"
 
 Write-Host "运行真实推理: $InputFile"
-& $exe $InputFile --python $python --script $script -o $mid -v
-if ($LASTEXITCODE -ne 0) { throw "tab_tool 退出码 $LASTEXITCODE" }
+$runExit = Invoke-Native {
+    & $exe $InputFile --python $python --script $script -o $mid -v 2>&1 |
+        Show-NativeLine
+}
+if ($runExit -ne 0) { throw "tab_tool 退出码 $runExit" }
 if (-not (Test-Path $mid)) { throw "没有生成 MIDI: $mid" }
 
 & $python (Join-Path $Root "tests\midi_stats.py") $mid

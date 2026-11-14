@@ -13,7 +13,9 @@ public:
     TranscribeJob(std::unique_ptr<IAudioDecoder> decoder,
                   std::unique_ptr<ITranscriber> transcriber);
 
-    bool run(const TranscribeParams& params, std::string& error_message);
+    bool run(const TranscribeParams& params,
+             std::string& error_message,
+             TranscribeStats* stats = nullptr);
 
 private:
     std::unique_ptr<IAudioDecoder> decoder_;

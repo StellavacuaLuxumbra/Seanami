@@ -10,7 +10,9 @@ TranscribeJob::TranscribeJob(std::unique_ptr<IAudioDecoder> decoder,
                              std::unique_ptr<ITranscriber> transcriber)
     : decoder_(std::move(decoder)), transcriber_(std::move(transcriber)) {}
 
-bool TranscribeJob::run(const TranscribeParams& params, std::string& error_message) {
+bool TranscribeJob::run(const TranscribeParams& params,
+                        std::string& error_message,
+                        TranscribeStats* stats) {
     std::error_code ec;
 
     // 1. 检查输入文件
@@ -50,7 +52,7 @@ bool TranscribeJob::run(const TranscribeParams& params, std::string& error_messa
     // 4. 调用推理后端（第一版为 Python 子进程）
     TranscribeParams run_params = params;
     run_params.input_path = temp_wav.u8string();
-    if (!transcriber_->transcribe(run_params, error_message)) {
+    if (!transcriber_->transcribe(run_params, error_message, stats)) {
         cleanup();
         return false;
     }

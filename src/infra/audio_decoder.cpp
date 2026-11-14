@@ -4,6 +4,8 @@
 #include "dr_wav.h"
 #define DR_MP3_IMPLEMENTATION
 #include "dr_mp3.h"
+#define DR_FLAC_IMPLEMENTATION
+#include "dr_flac.h"
 
 #include <algorithm>
 #include <cctype>
@@ -107,6 +109,47 @@ bool load_mp3(const std::string& path,
     return true;
 }
 
+bool load_flac(const std::string& path,
+               std::vector<float>& pcm,
+               uint32_t& sample_rate,
+               uint32_t& channels,
+               std::string& error) {
+#ifdef _WIN32
+    drflac* flac = drflac_open_file_w(utf8_to_wide(path).c_str(), nullptr);
+#else
+    drflac* flac = drflac_open_file(path.c_str(), nullptr);
+#endif
+    if (!flac) {
+        error = "无法打开 FLAC 文件（文件损坏或不是有效的 FLAC）";
+        return false;
+    }
+
+    sample_rate = flac->sampleRate;
+    channels = flac->channels;
+    if (channels == 0) {
+        drflac_close(flac);
+        error = "FLAC 文件声道信息异常";
+        return false;
+    }
+
+    const uint32_t frame_capacity = 4096 / channels;
+    std::vector<float> buffer(static_cast<size_t>(frame_capacity) * channels);
+    while (true) {
+        const drflac_uint64 frames =
+            drflac_read_pcm_frames_f32(flac, frame_capacity, buffer.data());
+        if (frames == 0) break;
+        pcm.insert(pcm.end(), buffer.begin(),
+                   buffer.begin() + static_cast<size_t>(frames) * channels);
+    }
+    drflac_close(flac);
+
+    if (pcm.empty()) {
+        error = "FLAC 文件不包含音频数据";
+        return false;
+    }
+    return true;
+}
+
 }  // namespace
 
 bool AudioDecoder::decode_to_wav(const std::string& input_path,
@@ -125,8 +168,12 @@ bool AudioDecoder::decode_to_wav(const std::string& input_path,
         if (!load_mp3(input_path, pcm, sample_rate, channels, error_message)) {
             return false;
         }
+    } else if (ext == ".flac") {
+        if (!load_flac(input_path, pcm, sample_rate, channels, error_message)) {
+            return false;
+        }
     } else {
-        error_message = "不支持的输入格式（仅支持 WAV / MP3）";
+        error_message = "不支持的输入格式（仅支持 WAV / MP3 / FLAC）";
         return false;
     }
 

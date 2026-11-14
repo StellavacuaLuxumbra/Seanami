@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(tab_tool LANGUAGES CXX)
+project(tab_tool VERSION 0.2.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -26,6 +26,9 @@ target_include_directories(tab_tool PRIVATE
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/third_party
 )
+
+find_package(Threads REQUIRED)
+target_link_libraries(tab_tool PRIVATE Threads::Threads)
 
 if(WIN32)
     target_link_libraries(tab_tool PRIVATE shell32)
