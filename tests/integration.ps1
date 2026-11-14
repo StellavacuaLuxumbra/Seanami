@@ -6,13 +6,13 @@ $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 Set-Location $Root
 
-$exe = Join-Path $Root "build\tab_tool.exe"
+$exe = Join-Path $Root "build\seanami.exe"
 $python = Join-Path $Root "tools\python311\python.exe"
 $fakeScript = Join-Path $Root "tests\fake_transcribe.py"
 $sample = Join-Path $Root "tests\samples\melody.wav"
 
 if (-not (Test-Path $exe)) {
-    throw "找不到 build\tab_tool.exe，请先运行 .\build.ps1"
+    throw "找不到 build\seanami.exe，请先运行 .\build.ps1"
 }
 if (-not (Test-Path $python)) {
     throw "找不到 tools\python311\python.exe，请先运行 .\scripts\install_python.ps1"
@@ -28,11 +28,11 @@ function Assert-True {
     }
 }
 
-function Invoke-TabTool {
+function Invoke-Seanami {
     param([string[]]$Arguments)
     & $exe @Arguments
     if ($LASTEXITCODE -ne 0) {
-        throw "tab_tool 退出码 $LASTEXITCODE：$($Arguments -join ' ')"
+        throw "Seanami 退出码 $LASTEXITCODE：$($Arguments -join ' ')"
     }
 }
 
@@ -57,23 +57,23 @@ New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
 $paramsPath = Join-Path $outDir "params.json"
 $pidLog = Join-Path $outDir "pids.log"
-$env:TAB_TOOL_FAKE_PARAMS = $paramsPath
-$env:TAB_TOOL_FAKE_PID_LOG = $pidLog
+$env:SEANAMI_FAKE_PARAMS = $paramsPath
+$env:SEANAMI_FAKE_PID_LOG = $pidLog
 
 Write-Host "运行集成测试（使用假推理脚本，不依赖 TensorFlow）..."
 Write-Host "--- 1. 单文件 worker ---"
 $singleMid = Join-Path $outDir "single.mid"
-Invoke-TabTool @($sample, "--python", $python, "--script", $fakeScript, "-o", $singleMid, "-v")
+Invoke-Seanami @($sample, "--python", $python, "--script", $fakeScript, "-o", $singleMid, "-v")
 Assert-Midi $singleMid "单文件"
 
 Write-Host "--- 2. 单文件 --no-worker ---"
 $noWorkerMid = Join-Path $outDir "no_worker.mid"
-Invoke-TabTool @($sample, "--python", $python, "--script", $fakeScript, "-o", $noWorkerMid, "--no-worker")
+Invoke-Seanami @($sample, "--python", $python, "--script", $fakeScript, "-o", $noWorkerMid, "--no-worker")
 Assert-Midi $noWorkerMid "no-worker"
 
 Write-Host "--- 3. 预设与显式参数 ---"
 $presetMid = Join-Path $outDir "preset.mid"
-Invoke-TabTool @($sample, "--python", $python, "--script", $fakeScript, "-o", $presetMid,
+Invoke-Seanami @($sample, "--python", $python, "--script", $fakeScript, "-o", $presetMid,
     "--preset", "vocal", "--quantize", "--quantize-grid", "1/8")
 $p = Get-Content $paramsPath -Raw -Encoding UTF8 | ConvertFrom-Json
 Assert-True ($p.preset -eq "vocal") "预设名未传递: $($p.preset)"
@@ -86,7 +86,7 @@ Assert-True ($p.quantize_grid -eq "1/8") "量化网格未传递: $($p.quantize_g
 Assert-True ($p.program -eq 53) "vocal GM program 不正确: $($p.program)"
 
 $overrideMid = Join-Path $outDir "override.mid"
-Invoke-TabTool @($sample, "--python", $python, "--script", $fakeScript, "-o", $overrideMid,
+Invoke-Seanami @($sample, "--python", $python, "--script", $fakeScript, "-o", $overrideMid,
     "--preset", "vocal", "--poly", "--no-quantize", "--program", "40")
 $p = Get-Content $paramsPath -Raw -Encoding UTF8 | ConvertFrom-Json
 Assert-True ($p.mono -eq $false) "--poly 未覆盖预设"
@@ -104,7 +104,7 @@ Set-Content -Path (Join-Path $inDir "readme.txt") -Value "not audio"
 
 $batchOut = Join-Path $outDir "batch"
 $csvReport = Join-Path $outDir "report.csv"
-Invoke-TabTool @($inDir, "-o", $batchOut, "--python", $python, "--script", $fakeScript,
+Invoke-Seanami @($inDir, "-o", $batchOut, "--python", $python, "--script", $fakeScript,
     "--jobs", "3", "--report", $csvReport)
 Assert-Midi (Join-Path $batchOut "a.mid") "批量 a"
 Assert-Midi (Join-Path $batchOut "b b.mid") "批量 空格名"
@@ -119,7 +119,7 @@ foreach ($row in $rows) {
 Write-Host "--- 5. 递归 / JSON 报告 ---"
 $recursiveOut = Join-Path $outDir "recursive"
 $jsonReport = Join-Path $outDir "report.json"
-Invoke-TabTool @($inDir, "-r", "-o", $recursiveOut, "--python", $python, "--script", $fakeScript,
+Invoke-Seanami @($inDir, "-r", "-o", $recursiveOut, "--python", $python, "--script", $fakeScript,
     "--jobs", "2", "--report", $jsonReport)
 $doc = Get-Content $jsonReport -Raw -Encoding UTF8 | ConvertFrom-Json
 Assert-True ($doc.total -eq 4) "递归任务数应为 4，实际 $($doc.total)"
@@ -129,7 +129,7 @@ Assert-Midi (Join-Path $recursiveOut "sub\d.mid") "递归子目录"
 
 Write-Host "--- 6. --skip-existing ---"
 $skipReport = Join-Path $outDir "skip.json"
-Invoke-TabTool @($inDir, "-r", "-o", $recursiveOut, "--python", $python, "--script", $fakeScript,
+Invoke-Seanami @($inDir, "-r", "-o", $recursiveOut, "--python", $python, "--script", $fakeScript,
     "--jobs", "2", "--skip-existing", "--report", $skipReport)
 $skipDoc = Get-Content $skipReport -Raw -Encoding UTF8 | ConvertFrom-Json
 Assert-True ($skipDoc.total -eq 4) "跳过任务数应为 4，实际 $($skipDoc.total)"
@@ -140,7 +140,7 @@ Assert-True ($skipDoc.failed -eq 0) "跳过后不应有失败"
 Write-Host "--- 7. worker 复用（--jobs 1） ---"
 if (Test-Path $pidLog) { Remove-Item -Force $pidLog }
 $pidOut = Join-Path $outDir "pidbatch"
-Invoke-TabTool @($inDir, "-o", $pidOut, "--python", $python, "--script", $fakeScript, "--jobs", "1")
+Invoke-Seanami @($inDir, "-o", $pidOut, "--python", $python, "--script", $fakeScript, "--jobs", "1")
 $pids = Get-Content $pidLog -Encoding UTF8 |
     ForEach-Object { ($_ -split "`t")[0] } |
     Select-Object -Unique
@@ -151,12 +151,12 @@ $flac = Join-Path $outDir "melody test.flac"
 & $python (Join-Path $Root "tests\make_flac.py") $sample $flac | Out-Null
 if ($LASTEXITCODE -ne 0) { throw "生成 FLAC 失败" }
 $flacMid = Join-Path $outDir "flac.mid"
-Invoke-TabTool @($flac, "--python", $python, "--script", $fakeScript, "-o", $flacMid)
+Invoke-Seanami @($flac, "--python", $python, "--script", $fakeScript, "-o", $flacMid)
 Assert-Midi $flacMid "FLAC"
 
 Write-Host "集成测试通过（worker、批量、报告、跳过、预设、FLAC）"
 if (-not $KeepOutput) {
     Remove-Item -Recurse -Force $outDir
-    Remove-Item Env:TAB_TOOL_FAKE_PARAMS -ErrorAction SilentlyContinue
-    Remove-Item Env:TAB_TOOL_FAKE_PID_LOG -ErrorAction SilentlyContinue
+    Remove-Item Env:SEANAMI_FAKE_PARAMS -ErrorAction SilentlyContinue
+    Remove-Item Env:SEANAMI_FAKE_PID_LOG -ErrorAction SilentlyContinue
 }

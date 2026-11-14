@@ -450,9 +450,9 @@ CliResult parse_args(const std::vector<std::string>& args) {
 
 std::string help_text() {
     std::ostringstream os;
-    os << "tab_tool - 音频自动扒谱工具\n\n"
+    os << "Seanami - 音频自动扒谱工具\n\n"
        << "用法:\n"
-       << "  tab_tool <input.wav|input.mp3|input.flac|目录> [选项]\n\n"
+       << "  seanami <input.wav|input.mp3|input.flac|目录> [选项]\n\n"
        << "输入可以是单个音频文件，也可以是包含 WAV/MP3/FLAC 的目录。\n\n"
        << "输出:\n"
        << "  -o, --output <path>        输出 MIDI 路径；多文件时为输出目录\n"
@@ -494,14 +494,14 @@ std::string help_text() {
        << "      --version              显示版本\n"
        << "  -h, --help                 显示帮助\n\n"
        << "示例:\n"
-       << "  tab_tool song.wav\n"
-       << "  tab_tool song.mp3 -o song.mid --preset vocal\n"
-       << "  tab_tool song.wav --preset guitar --quantize --report out.csv\n"
-       << "  tab_tool .\\music -r -o .\\out --jobs 4 --skip-existing\n"
-       << "  tab_tool song.wav --separate hpss -o song.mid\n";
+       << "  seanami song.wav\n"
+       << "  seanami song.mp3 -o song.mid --preset vocal\n"
+       << "  seanami song.wav --preset guitar --quantize --report out.csv\n"
+       << "  seanami .\\music -r -o .\\out --jobs 4 --skip-existing\n"
+       << "  seanami song.wav --separate hpss -o song.mid\n";
     return os.str();
 }
 
 std::string version_text() {
-    return "tab_tool 0.2.0";
+    return "Seanami 0.2.1";
 }

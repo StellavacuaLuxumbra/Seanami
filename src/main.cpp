@@ -104,7 +104,7 @@ int main() {
     int argc = 0;
     LPWSTR* argv_w = CommandLineToArgvW(GetCommandLineW(), &argc);
     if (!argv_w) {
-        std::cerr << "[tab_tool] 错误: 无法读取命令行参数" << std::endl;
+        std::cerr << "[Seanami] 错误: 无法读取命令行参数" << std::endl;
         return 1;
     }
 
@@ -126,7 +126,7 @@ int main() {
         return 0;
     }
     if (!cli.ok) {
-        std::cerr << "[tab_tool] 错误: " << cli.error << std::endl;
+        std::cerr << "[Seanami] 错误: " << cli.error << std::endl;
         std::cerr << "使用 --help 查看用法" << std::endl;
         return 1;
     }
@@ -145,14 +145,14 @@ int main() {
 
     std::error_code ec;
     if (!std::filesystem::exists(std::filesystem::u8path(cli.params.input_path), ec)) {
-        std::cerr << "[tab_tool] 错误: 输入不存在: " << cli.params.input_path << std::endl;
+        std::cerr << "[Seanami] 错误: 输入不存在: " << cli.params.input_path << std::endl;
         return 2;
     }
 
     const std::vector<std::string> inputs =
         collect_inputs(cli.params.input_path, cli.recursive);
     if (inputs.empty()) {
-        std::cerr << "[tab_tool] 错误: 没有找到可处理的音频文件（WAV/MP3/FLAC）: "
+        std::cerr << "[Seanami] 错误: 没有找到可处理的音频文件（WAV/MP3/FLAC）: "
                   << cli.params.input_path << std::endl;
         return 2;
     }

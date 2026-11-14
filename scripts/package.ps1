@@ -11,10 +11,10 @@ $Root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 Set-Location $Root
 
 # 1. 定位编译产物
-$exe = Get-ChildItem -Path $BuildDir -Recurse -Filter "tab_tool.exe" -ErrorAction SilentlyContinue |
+$exe = Get-ChildItem -Path $BuildDir -Recurse -Filter "seanami.exe" -ErrorAction SilentlyContinue |
        Select-Object -First 1
 if (-not $exe) {
-    throw "找不到 tab_tool.exe，请先编译：cmake --build $BuildDir --config Release"
+    throw "找不到 seanami.exe，请先编译：cmake --build $BuildDir --config Release"
 }
 
 # 2. 准备输出目录
@@ -26,7 +26,7 @@ if (Test-Path $OutDir) {
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 
 # 3. 复制主程序、脚本和许可证
-Copy-Item $exe.FullName (Join-Path $OutDir "tab_tool.exe")
+Copy-Item $exe.FullName (Join-Path $OutDir "seanami.exe")
 Copy-Item -Recurse -Force "scripts" (Join-Path $OutDir "scripts")
 Copy-Item (Join-Path $Root "LICENSE") (Join-Path $OutDir "LICENSE")
 Copy-Item (Join-Path $Root "THIRD_PARTY_NOTICES.md") (Join-Path $OutDir "THIRD_PARTY_NOTICES.md")
@@ -190,19 +190,19 @@ if (Test-Path $pythonExe) {
 
 # 6. 生成使用说明
 $readme = @"
-tab_tool 0.2.0 使用说明
+Seanami 0.2.1 使用说明
 =======================
 
 用法：
-  tab_tool.exe <input.wav|input.mp3|input.flac|目录> [选项]
+  seanami.exe <input.wav|input.mp3|input.flac|目录> [选项]
 
 快速开始：
-  tab_tool.exe song.wav
-  tab_tool.exe song.mp3 -o song.mid --preset vocal
-  tab_tool.exe song.flac --preset guitar --quantize --quantize-grid 1/16
-  tab_tool.exe .\music -r -o .\out
-  tab_tool.exe .\music -r -o .\out --jobs 4 --skip-existing --report .\report.csv
-  tab_tool.exe song.wav --separate hpss
+  seanami.exe song.wav
+  seanami.exe song.mp3 -o song.mid --preset vocal
+  seanami.exe song.flac --preset guitar --quantize --quantize-grid 1/16
+  seanami.exe .\music -r -o .\out
+  seanami.exe .\music -r -o .\out --jobs 4 --skip-existing --report .\report.csv
+  seanami.exe song.wav --separate hpss
 
 常用选项：
   -o, --output <path>        输出 MIDI 路径；多文件时为输出目录
@@ -267,7 +267,7 @@ tab_tool 0.2.0 使用说明
 Set-Content -Path (Join-Path $OutDir "README.txt") -Value $readme -Encoding UTF8
 
 Write-Host "打包完成: $OutDir"
-Write-Host "测试: $OutDir\tab_tool.exe <音频文件>"
+Write-Host "测试: $OutDir\seanami.exe <音频文件>"
 
 # 7. 可选：生成 zip
 if ($Zip) {

@@ -31,10 +31,10 @@ if ($zig) {
     Write-Host "使用 Zig: $($zig.FullName)"
     New-Item -ItemType Directory -Force -Path build | Out-Null
     & $zig.FullName c++ -target x86_64-windows-gnu -std=c++17 -O2 -Isrc -Ithird_party `
-        @sources -o build/tab_tool.exe -lshell32
-    if ($LASTEXITCODE -eq 0 -and (Test-Path "build\tab_tool.exe")) {
+        @sources -o build/seanami.exe -lshell32
+    if ($LASTEXITCODE -eq 0 -and (Test-Path "build\seanami.exe")) {
         Copy-Item -Recurse -Force "scripts" "build/scripts"
-        Write-Host "产物: build\tab_tool.exe"
+        Write-Host "产物: build\seanami.exe"
         exit 0
     }
     Write-Warning "Zig 构建失败，尝试其他工具链..."
@@ -70,10 +70,10 @@ Write-Host "使用 MinGW: $gxx"
 New-Item -ItemType Directory -Force -Path build | Out-Null
 & $gxx -std=c++17 -O2 -Isrc -Ithird_party `
     @sources `
-    -o build/tab_tool.exe -lshell32
+    -o build/seanami.exe -lshell32
 
 if ($LASTEXITCODE -ne 0) { throw "编译失败" }
 
 # 方便本地直接运行：把脚本放到 exe 旁边
 Copy-Item -Recurse -Force "scripts" "build/scripts"
-Write-Host "产物: build\tab_tool.exe"
+Write-Host "产物: build\seanami.exe"

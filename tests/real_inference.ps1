@@ -7,14 +7,14 @@ $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 Set-Location $Root
 
-$exe = Join-Path $Root "build\tab_tool.exe"
+$exe = Join-Path $Root "build\seanami.exe"
 $python = Join-Path $Root "tools\python311\python.exe"
 $script = Join-Path $Root "scripts\transcribe.py"
 if (-not $InputFile) {
     $InputFile = Join-Path $Root "tests\samples\melody.wav"
 }
 
-if (-not (Test-Path $exe)) { throw "找不到 build\tab_tool.exe，请先运行 .\build.ps1" }
+if (-not (Test-Path $exe)) { throw "找不到 build\seanami.exe，请先运行 .\build.ps1" }
 if (-not (Test-Path $python)) { throw "找不到内置 Python，请先运行 .\scripts\install_python.ps1" }
 if (-not (Test-Path $InputFile)) {
     & $python (Join-Path $Root "tests\make_sample.py") | Out-Null
@@ -61,7 +61,7 @@ $runExit = Invoke-Native {
     & $exe $InputFile --python $python --script $script -o $mid -v 2>&1 |
         Show-NativeLine
 }
-if ($runExit -ne 0) { throw "tab_tool 退出码 $runExit" }
+if ($runExit -ne 0) { throw "Seanami 退出码 $runExit" }
 if (-not (Test-Path $mid)) { throw "没有生成 MIDI: $mid" }
 
 & $python (Join-Path $Root "tests\midi_stats.py") $mid

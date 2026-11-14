@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""在 vocadito 片段上批量跑 tab_tool，并用人工标注计算 note F1。
+"""在 vocadito 片段上批量跑 Seanami，并用人工标注计算 note F1。
 
 数据目录里每个片段需要：
   vocadito_N.wav
@@ -28,7 +28,7 @@ from note_eval import load_csv_notes, load_midi_notes, score
 def parse_args():
     parser = argparse.ArgumentParser(description="vocadito note F1 benchmark")
     parser.add_argument("--data-dir", default="tests/real/vocadito")
-    parser.add_argument("--exe", default="build/tab_tool.exe")
+    parser.add_argument("--exe", default="build/seanami.exe")
     parser.add_argument("--python", default="tools/python311/python.exe")
     parser.add_argument("--script", default="scripts/transcribe.py")
     parser.add_argument("--midi-dir", default="tests/out_eval/vocadito")

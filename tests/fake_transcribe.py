@@ -92,7 +92,7 @@ def summary(args, ok: bool = True, error: str = "") -> dict:
 
 
 def dump_params(args) -> None:
-    path = os.environ.get("TAB_TOOL_FAKE_PARAMS")
+    path = os.environ.get("SEANAMI_FAKE_PARAMS")
     if not path:
         return
     try:
@@ -103,7 +103,7 @@ def dump_params(args) -> None:
 
 
 def log_pid(args) -> None:
-    path = os.environ.get("TAB_TOOL_FAKE_PID_LOG")
+    path = os.environ.get("SEANAMI_FAKE_PID_LOG")
     if not path:
         return
     try:

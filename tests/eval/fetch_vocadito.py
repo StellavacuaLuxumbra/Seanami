@@ -62,7 +62,7 @@ def fetch(start: int, end: int, timeout: int = 300) -> bytes:
             URL,
             headers={
                 "Range": f"bytes={current}-{end}",
-                "User-Agent": "tab_tool-eval/1.0",
+                "User-Agent": "seanami-eval/1.0",
             },
         )
         try:
@@ -81,7 +81,7 @@ def fetch(start: int, end: int, timeout: int = 300) -> bytes:
 
 
 def read_central_directory():
-    request = urllib.request.Request(URL, method="HEAD", headers={"User-Agent": "tab_tool-eval/1.0"})
+    request = urllib.request.Request(URL, method="HEAD", headers={"User-Agent": "seanami-eval/1.0"})
     with urllib.request.urlopen(request, timeout=120) as response:
         total = int(response.headers["Content-Length"])
     tail_len = min(131072, total)

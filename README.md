@@ -1,11 +1,17 @@
-# tab_tool
+# Seanami
 
-基于 C++ 命令行的音频自动扒谱工具。C++ 负责音频解码、批处理编排、MIDI 校验和常驻 worker 管理，
+Seanami 是一个基于 C++ 命令行的音频自动扒谱工具。C++ 负责音频解码、批处理编排、MIDI 校验和常驻 worker 管理，
 Python 侧用 [Basic Pitch](https://github.com/spotify/basic-pitch) 做音频转 MIDI，通过子进程解耦。
 默认使用 Basic Pitch 自带的 ONNX 模型和 onnxruntime，发布包不需要 TensorFlow。
 
 预编译的 Windows 发布包见 [GitHub Releases](https://github.com/StellavacuaLuxumbra/Seanami/releases)，
 解压后可直接运行，无需安装 Python。
+
+## v0.2.1 更新
+
+- 软件名统一为 **Seanami**，可执行文件更名为 `seanami.exe`（旧版为 `tab_tool.exe`）
+- 命令行提示、帮助、文档和 MIDI 元数据同步改名
+- 功能与 v0.2.0 一致
 
 ## v0.2.0 新功能
 
@@ -69,7 +75,7 @@ cmake -S . -B build -G "Visual Studio 17 2022" -A x64
 cmake --build build --config Release
 ```
 
-产物：`build/Release/tab_tool.exe`（MSVC 生成器）或 `build/tab_tool.exe`（`build.ps1` / MinGW）。
+产物：`build/Release/seanami.exe`（MSVC 生成器）或 `build/seanami.exe`（`build.ps1` / MinGW）。
 
 > 如果项目路径包含中文，MinGW Makefiles 可能无法正确生成构建规则，建议使用 MSVC，
 > 或把项目放到纯英文路径下。直接用 `build.ps1` 的 g++ 分支可以绕过 CMake。
@@ -84,7 +90,7 @@ cmake --build build --config Release
 ```
 
 > 开发环境会安装 TensorFlow（basic-pitch 的默认依赖），但发布包默认使用 ONNX，
-> 打包时会移除 TensorFlow 和 scikit-learn 等非必需文件。发布目录约 515 MB。
+> 打包时会移除 TensorFlow 和 scikit-learn 等非必需文件。发布目录约 480 MB。
 
 ## 开发模式运行
 
@@ -102,7 +108,7 @@ python tests\make_sample.py
 也可以手动指定解释器：
 
 ```powershell
-.\build\tab_tool.exe song.wav `
+.\build\seanami.exe song.wav `
   --python .\tools\python311\python.exe `
   --script .\scripts\transcribe.py `
   -v
@@ -114,16 +120,16 @@ python tests\make_sample.py
 
 ```powershell
 # 处理整个目录，MIDI 输出到 out\
-.\build\tab_tool.exe .\music -o .\out
+.\build\seanami.exe .\music -o .\out
 
 # 递归子目录，并保留相对目录结构
-.\build\tab_tool.exe .\music -r -o .\out
+.\build\seanami.exe .\music -r -o .\out
 
 # 4 个 worker 并行，跳过已有输出，写 CSV 报告
-.\build\tab_tool.exe .\music -r -o .\out --jobs 4 --skip-existing --report .\report.csv
+.\build\seanami.exe .\music -r -o .\out --jobs 4 --skip-existing --report .\report.csv
 
 # 完成后用系统默认程序打开第一个 MIDI
-.\build\tab_tool.exe .\music -r -o .\out --open
+.\build\seanami.exe .\music -r -o .\out --open
 ```
 
 规则：
@@ -154,10 +160,10 @@ python tests\make_sample.py
 
 ```powershell
 # 自动检测 BPM，并吸附到 1/16 网格
-.\build\tab_tool.exe song.wav --quantize --quantize-grid 1/16
+.\build\seanami.exe song.wav --quantize --quantize-grid 1/16
 
 # 固定 96 BPM，只写单一速度
-.\build\tab_tool.exe song.wav --bpm 96 --quantize --quantize-grid 1/8
+.\build\seanami.exe song.wav --bpm 96 --quantize --quantize-grid 1/8
 ```
 
 支持的网格：`1/4`、`1/8`、`1/16`、`1/32`、`1/8T`、`1/16T`。
@@ -177,19 +183,19 @@ python tests\make_sample.py
 | `bass` | B0 ~ G4 | 是 | 90 ms | 0.50 | 33 Electric Bass |
 
 ```powershell
-.\build\tab_tool.exe song.wav --preset vocal
-.\build\tab_tool.exe song.wav --preset vocal --quantize
-.\build\tab_tool.exe song.wav --preset guitar --min-freq 100
+.\build\seanami.exe song.wav --preset vocal
+.\build\seanami.exe song.wav --preset vocal --quantize
+.\build\seanami.exe song.wav --preset guitar --min-freq 100
 ```
 
 ## 人声 / 伴奏分离
 
 ```powershell
 # 内置 HPSS，只保留谐波分量，不需要额外依赖
-.\build\tab_tool.exe song.wav --separate hpss
+.\build\seanami.exe song.wav --separate hpss
 
 # 可选 Demucs（发布包不包含，需要自行安装 demucs 和 torch）
-.\build\tab_tool.exe song.wav --separate demucs --demucs-model htdemucs
+.\build\seanami.exe song.wav --separate demucs --demucs-model htdemucs
 ```
 
 - `hpss` 使用 STFT 中值滤波提取谐波分量，适合削弱鼓点等打击性伴奏；比不分离慢约 60%。
@@ -227,7 +233,7 @@ python tests\make_sample.py
 
 ```
 dist/
-├── tab_tool.exe           # 64 位静态链接（Zig 构建），无需编译器 DLL
+├── seanami.exe           # 64 位静态链接（Zig 构建），无需编译器 DLL
 ├── msvcp140*.dll          # onnxruntime 需要的 MSVC 运行时
 ├── vcruntime140*.dll
 ├── python/                # 精简后的 Python 运行时 + basic-pitch + onnxruntime
@@ -246,10 +252,10 @@ dist/
 用户解压后直接运行，无需安装 Python：
 
 ```powershell
-.\tab_tool.exe song.wav
+.\seanami.exe song.wav
 ```
 
-> 发布包约 515 MB（已移除 TensorFlow、keras、sklearn 等）。压缩后的 `dist.zip` 约 155 MB。
+> 发布包约 480 MB（已移除 TensorFlow、keras、sklearn 等）。压缩后的 `dist.zip` 约 155 MB。
 > 如果显式传入 `-m` 指向 TensorFlow SavedModel，仍需要自行准备 TensorFlow 运行时。
 >
 > 打包时 Python 运行时用硬链接镜像（同一磁盘上近乎瞬时，且不重复占用空间）；
@@ -268,7 +274,7 @@ A1/A2 计算，取较高值作为该段的 A-max，再对 10 段求平均。
 | 100 ms | 0.526 | 0.500 | 0.562 | 62.9 |
 | 127.7 ms（默认） | 0.523 | 0.526 | 0.526 | 55.1 |
 
-v0.2.0 功能对比（均为默认 127.7 ms 网格）：
+v0.2.x 功能对比（均为默认 127.7 ms 网格）：
 
 | 配置 | 平均 F1 | 精确率 | 召回率 | 平均音符数/段 |
 | --- | --- | --- | --- | --- |
@@ -305,7 +311,7 @@ v0.2.0 功能对比（均为默认 127.7 ms 网格）：
 ## 命令行
 
 ```
-tab_tool <input.wav|input.mp3|input.flac|目录> [选项]
+seanami <input.wav|input.mp3|input.flac|目录> [选项]
 
 输出:
   -o, --output <path>        输出 MIDI 路径；多文件时为输出目录

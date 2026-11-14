@@ -35,7 +35,7 @@ bool TranscribeJob::run(const TranscribeParams& params,
     const auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
     const auto temp_wav =
         std::filesystem::temp_directory_path() /
-        ("tab_tool_" + std::to_string(stamp) + ".wav");
+        ("seanami_" + std::to_string(stamp) + ".wav");
 
     auto cleanup = [&]() {
         if (!params.keep_temp) {
